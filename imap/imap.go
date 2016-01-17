@@ -6,6 +6,7 @@ package imap
 
 import (
 	"crypto/tls"
+	"fmt"
 	"io"
 	"net"
 	"strconv"
