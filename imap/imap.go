@@ -297,7 +297,7 @@ func (c *Client) Append(mbox string, flags FlagSet, idate *time.Time, msg []byte
 		f = append(f, *idate)
 	}
 
-	_, err = c.Send("APPEND", append(f, "{"+strconv.Itoa(len(msg))+"+}")...)
+	_, err = c.Send("APPEND", append(f, "{"+strconv.Itoa(len(msg)+2)+"+}")...)
 
 	if err != nil {
 		return
@@ -306,16 +306,32 @@ func (c *Client) Append(mbox string, flags FlagSet, idate *time.Time, msg []byte
 	str := string(msg)
 	strArray := strings.Split(str, "\r\n")
 
+	println("Size: " + strconv.Itoa(len(msg)))
+
+	n := 0
+
 	for _, line := range strArray {
 		line += "\r\n"
-		_, err = c.t.Write([]byte(line))
+		var n2 int
+		n2, err = c.t.Write([]byte(line))
+
+		n += n2
 
 		if err != nil {
 			return
 		}
+
+		err = c.t.Flush()
+
+		if err != nil {
+			return
+		}
+
 	}
 
-	err = c.t.WriteLine([]byte{})
+	println("Wrote: " + strconv.Itoa(n))
+
+	_, err = c.t.Write([]byte("\r\n"))
 
 	if err != nil {
 		return
@@ -327,7 +343,9 @@ func (c *Client) Append(mbox string, flags FlagSet, idate *time.Time, msg []byte
 		return
 	}
 
-	err = c.Recv(10 * time.Second)
+	println(fmt.Sprintf("Doing receive now %+v", c.State()))
+
+	err = c.Recv(120 * time.Second)
 
 	return
 }
