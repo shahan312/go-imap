@@ -290,6 +290,7 @@ func (c *Client) Status(mbox string, items ...string) (cmd *Command, err error) 
 // specified destination mailbox. Flags and internal date arguments are optional
 // and may be set to nil.
 func (c *Client) Append(mbox string, flags FlagSet, idate *time.Time, msg []byte) (err error) {
+
 	f := []Field{c.Quote(UTF7Encode(mbox)), nil, nil, nil}[:1]
 	if flags != nil {
 		f = append(f, flags)
@@ -298,7 +299,7 @@ func (c *Client) Append(mbox string, flags FlagSet, idate *time.Time, msg []byte
 		f = append(f, *idate)
 	}
 
-	_, err = c.Send("APPEND", append(f, "{"+strconv.Itoa(len(msg)+2)+"+}")...)
+	cmds, err := c.Send("APPEND", append(f, "{"+strconv.Itoa(len(msg)+2)+"+}")...)
 
 	if err != nil {
 		return
@@ -307,30 +308,38 @@ func (c *Client) Append(mbox string, flags FlagSet, idate *time.Time, msg []byte
 	str := string(msg)
 	strArray := strings.Split(str, "\r\n")
 
-	println("Size: " + strconv.Itoa(len(msg)))
-
 	n := 0
 
 	for _, line := range strArray {
 		line += "\r\n"
+		lineByte := []byte(line)
+
+		/// flush buffer if needed
+		if c.t.buf.Available() < len(lineByte) {
+			err = c.t.Flush()
+
+			if err != nil {
+				return
+			}
+		}
+
+		// do write
 		var n2 int
 		n2, err = c.t.Write([]byte(line))
-
 		n += n2
 
 		if err != nil {
 			return
 		}
+	}
 
+	if c.t.buf.Available() < len([]byte("\r\n")) {
 		err = c.t.Flush()
 
 		if err != nil {
 			return
 		}
-
 	}
-
-	println("Wrote: " + strconv.Itoa(n))
 
 	_, err = c.t.Write([]byte("\r\n"))
 
@@ -344,9 +353,9 @@ func (c *Client) Append(mbox string, flags FlagSet, idate *time.Time, msg []byte
 		return
 	}
 
-	println(fmt.Sprintf("Doing receive now %+v", c.State()))
-
-	err = c.Recv(120 * time.Second)
+	// err = c.Recv(120 * time.Second)
+	res, err := cmds.Result(OK)
+	println(fmt.Sprintf("%+v %+v", res, err))
 
 	return
 }
