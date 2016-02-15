@@ -442,7 +442,13 @@ func (c *Client) UIDSearch(spec ...Field) (cmd *Command, err error) {
 
 // UIDFetch is identical to Fetch, but the seq argument is interpreted as
 // containing unique identifiers instead of message sequence numbers.
-func (c *Client) UIDFetch(seq *SeqSet, items ...string) (cmd *Command, err error) {
+// can use CHANGEDSINCE / CONDSTORE
+func (c *Client) UIDFetch(seq *SeqSet, condstore bool, modSeq int, items ...string) (cmd *Command, err error) {
+
+	if condstore {
+		return c.Send("UID FETCH", seq, stringsToFields(items), "(CHANGEDSINCE "+strconv.Itoa(modSeq)+")")
+	}
+
 	return c.Send("UID FETCH", seq, stringsToFields(items))
 }
 
