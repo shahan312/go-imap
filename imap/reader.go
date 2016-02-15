@@ -262,6 +262,12 @@ func (raw *rawResponse) parseStatus() error {
 			return raw.missing("SP", 0)
 		}
 		raw.tail = raw.tail[1:]
+
+		// fix for supporting HIGHESTMODSEQ ON UID FETCH request
+		if len(raw.tail) == 0 {
+			raw.tail = nil
+			return nil
+		}
 	}
 	if len(raw.tail) == 0 {
 		return raw.missing("status text", 0)
