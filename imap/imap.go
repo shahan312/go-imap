@@ -6,7 +6,6 @@ package imap
 
 import (
 	"crypto/tls"
-	"fmt"
 	"io"
 	"net"
 	"strconv"
@@ -354,8 +353,7 @@ func (c *Client) Append(mbox string, flags FlagSet, idate *time.Time, msg []byte
 	}
 
 	// err = c.Recv(120 * time.Second)
-	res, err := cmds.Result(OK)
-	println(fmt.Sprintf("%+v %+v", res, err))
+	_, err = cmds.Result(OK)
 
 	return
 }
