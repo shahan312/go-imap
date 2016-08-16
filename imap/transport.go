@@ -51,7 +51,7 @@ var (
 // BufferSize sets the size of the send and receive buffers (in bytes). This is
 // also the length limit of physical lines. In practice, the client should
 // restrict line length to approximately 1000 bytes, as described in RFC 2683.
-var BufferSize = 65536
+var BufferSize = 2048
 
 // Line termination.
 var crlf = []byte{cr, lf}
@@ -156,19 +156,28 @@ func (t *transport) Closed() bool {
 // text. Otherwise, all bytes that have been read are returned unmodified along
 // with an error explaining the problem.
 func (t *transport) ReadLine() (line []byte, err error) {
-	line, err = t.buf.ReadSlice(lf)
-	n := len(line)
 
-	// Copy bytes out of the read buffer
-	if n > 0 {
-		temp := make([]byte, n)
-		copy(temp, line)
-		line = temp
-	} else {
-		line = nil
+	var tmp []byte = make([]byte, 0, BufferSize)
+	for {
+		tmp, err = t.buf.ReadSlice(lf)
+		n := len(tmp)
+		if n > 0 {
+			line = append(line, tmp...)
+		}
+
+		// if we got anything other than a buffer full error, we're done
+		if err == nil || err != bufio.ErrBufferFull {
+			break
+		}
+
+		// if we read no data, return
+		if n == 0 {
+			break
+		}
 	}
 
 	// Check line format; if err == nil, the line ends with LF
+	n := len(line)
 	if err == nil {
 		if n >= 2 && line[n-2] == cr {
 			line = line[:n-2]
