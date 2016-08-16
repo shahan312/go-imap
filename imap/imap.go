@@ -9,7 +9,6 @@ import (
 	"io"
 	"net"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -288,8 +287,7 @@ func (c *Client) Status(mbox string, items ...string) (cmd *Command, err error) 
 // Append appends the literal argument as a new message to the end of the
 // specified destination mailbox. Flags and internal date arguments are optional
 // and may be set to nil.
-func (c *Client) Append(mbox string, flags FlagSet, idate *time.Time, msg []byte) (err error) {
-
+func (c *Client) Append(mbox string, flags FlagSet, idate *time.Time, msg Literal) (cmd *Command, err error) {
 	f := []Field{c.Quote(UTF7Encode(mbox)), nil, nil, nil}[:1]
 	if flags != nil {
 		f = append(f, flags)
@@ -297,65 +295,7 @@ func (c *Client) Append(mbox string, flags FlagSet, idate *time.Time, msg []byte
 	if idate != nil {
 		f = append(f, *idate)
 	}
-
-	cmds, err := c.Send("APPEND", append(f, "{"+strconv.Itoa(len(msg)+2)+"+}")...)
-
-	if err != nil {
-		return
-	}
-
-	str := string(msg)
-	strArray := strings.Split(str, "\r\n")
-
-	n := 0
-
-	for _, line := range strArray {
-		line += "\r\n"
-		lineByte := []byte(line)
-
-		/// flush buffer if needed
-		if c.t.buf.Available() < len(lineByte) {
-			err = c.t.Flush()
-
-			if err != nil {
-				return
-			}
-		}
-
-		// do write
-		var n2 int
-		n2, err = c.t.Write([]byte(line))
-		n += n2
-
-		if err != nil {
-			return
-		}
-	}
-
-	if c.t.buf.Available() < len([]byte("\r\n")) {
-		err = c.t.Flush()
-
-		if err != nil {
-			return
-		}
-	}
-
-	_, err = c.t.Write([]byte("\r\n"))
-
-	if err != nil {
-		return
-	}
-
-	err = c.t.Flush()
-
-	if err != nil {
-		return
-	}
-
-	// err = c.Recv(120 * time.Second)
-	_, err = cmds.Result(OK)
-
-	return
+	return c.Send("APPEND", append(f, msg)...)
 }
 
 // Check requests a checkpoint of the currently selected mailbox. A checkpoint
