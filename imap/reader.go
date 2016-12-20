@@ -318,10 +318,19 @@ func (raw *rawResponse) parseFields(stop byte) (fields []Field, err error) {
 			f, err = raw.parseFields(')')
 		default:
 			f, err = raw.parseAtom(raw.Type == Data && stop != ']')
+			// HACK(SHAHAN): Allow "* FLAGS (\\Answered \\Flagged \\Deleted \\Draft \\Seen $Forwarded )" for Surgemail Version 7.2a-1
+			if raw.Tag == "*" && len(raw.tail) == 2 && raw.tail[0] == ' ' && raw.tail[1] == ')' && len(fields) > 0 {
+				raw.tail = raw.tail[1:]
+			}
+			// HACK(SHAHAN): Allow "* OK [PERMANENTFLAGS (\\Answered \\Flagged \\Deleted \\Draft \\Seen $Forwarded )] Limited" for Surgemail Version 7.2a-1
+			if raw.Tag == "*" && len(raw.tail) == 11 && string(raw.tail) == " )] Limited" && len(fields) > 0 {
+				raw.tail = raw.tail[1:]
+			}
 		}
 		if err == nil || f != nil {
 			fields = append(fields, f)
 		}
+
 		// Delimiter
 		if len(raw.tail) > 0 && err == nil {
 			switch raw.tail[0] {
@@ -447,6 +456,7 @@ func init() {
 // string. Flags (e.g. "\Seen") are converted to title case, other strings are
 // left in their original form.
 func (raw *rawResponse) parseAtom(astring bool) (f Field, err error) {
+
 	n, flag := 0, false
 	for end := len(raw.tail); n < end; n++ {
 		if c := raw.tail[n]; c >= char || atomSpecials[c] {
