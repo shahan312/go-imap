@@ -166,6 +166,7 @@ type MailboxStatus struct {
 	UIDNext      uint32  // The next unique identifier value
 	UIDValidity  uint32  // The unique identifier validity value
 	UIDNotSticky bool    // UIDPLUS extension (client-only)
+	NOMODSEQ     bool    // set to true if NOMODSEQ is provided
 }
 
 // newMailboxStatus returns an initialized MailboxStatus instance.
@@ -191,8 +192,9 @@ func (m *MailboxStatus) String() string {
 		"UIDNext:      %v\n"+
 		"UIDValidity:  %v\n"+
 		"UIDNotSticky: %v\n",
+		"NOMODSEQ:     %v\n",
 		m.Name, m.ReadOnly, m.Flags, m.PermFlags, m.Messages, m.Recent,
-		m.Unseen, m.UIDNext, m.UIDValidity, m.UIDNotSticky)
+		m.Unseen, m.UIDNext, m.UIDValidity, m.UIDNotSticky, m.NOMODSEQ)
 }
 
 // MailboxStatus returns the mailbox status information extracted from a STATUS
@@ -202,6 +204,7 @@ func (rsp *Response) MailboxStatus() *MailboxStatus {
 	if !ok && rsp.Decoded == nil && rsp.Label == "STATUS" {
 		v = &MailboxStatus{Name: AsMailbox(rsp.Fields[1])}
 		f := AsList(rsp.Fields[2])
+
 		for i := 0; i < len(f)-1; i += 2 {
 			switch n := AsNumber(f[i+1]); toUpper(AsAtom(f[i])) {
 			case "MESSAGES":

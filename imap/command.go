@@ -285,7 +285,7 @@ func LabelFilter(labels ...string) ResponseFilter {
 var SelectFilter = LabelFilter(
 	"FLAGS", "EXISTS", "RECENT",
 	"UNSEEN", "PERMANENTFLAGS", "UIDNEXT", "UIDVALIDITY",
-	"UIDNOTSTICKY",
+	"UIDNOTSTICKY", "NOMODSEQ",
 )
 
 // CommandConfig specifies command execution parameters.

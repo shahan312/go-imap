@@ -111,6 +111,10 @@ type Client struct {
 	*debugLog
 }
 
+func (c *Client) DebugCmds() map[string]*Command {
+	return c.cmds
+}
+
 // NewClient returns a new Client instance connected to an IMAP server via conn.
 // The function waits for the server to send a greeting message, and then
 // requests server capabilities if they weren't included in the greeting. An
@@ -438,6 +442,8 @@ func (c *Client) update(rsp *Response) {
 		switch selected := (c.state == Selected); rsp.Label {
 		case "PERMANENTFLAGS":
 			c.Mailbox.PermFlags.Replace(rsp.Fields[1])
+		case "NOMODSEQ":
+			c.Mailbox.NOMODSEQ = true
 		case "READ-ONLY":
 			if selected && !c.Mailbox.ReadOnly {
 				c.Logln(LogState, "Mailbox access change: RW -> RO")
