@@ -363,5 +363,8 @@ func defaultCommands() map[string]*CommandConfig {
 
 		// RFC 5161
 		"ENABLE": &CommandConfig{States: all, Filter: LabelFilter("ENABLED")},
+
+		// RFC 2342
+		"NAMESPACE": &CommandConfig{States: auth, Filter: LabelFilter("NAMESPACE")},
 	}
 }
