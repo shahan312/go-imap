@@ -456,6 +456,8 @@ func (c *Client) update(rsp *Response) {
 			c.Mailbox.ReadOnly = false
 		case "UIDNEXT":
 			c.Mailbox.UIDNext = rsp.Value()
+		case "HIGHESTMODSEQ":
+			c.Mailbox.HighestMODSEQ = rsp.Value()
 		case "UIDVALIDITY":
 			v := rsp.Value()
 			if u := c.Mailbox.UIDValidity; selected && u != v {

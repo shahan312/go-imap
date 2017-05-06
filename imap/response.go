@@ -156,17 +156,18 @@ func (rsp *Response) MailboxInfo() *MailboxInfo {
 // currently selected mailbox. Fields that are only set by the Client are marked
 // as client-only.
 type MailboxStatus struct {
-	Name         string  // Mailbox name
-	ReadOnly     bool    // Mailbox read/write access (client-only)
-	Flags        FlagSet // Defined flags in the mailbox (client-only)
-	PermFlags    FlagSet // Flags that the client can change permanently (client-only)
-	Messages     uint32  // Number of messages in the mailbox
-	Recent       uint32  // Number of messages with the \Recent flag set
-	Unseen       uint32  // Sequence number of the first unseen message
-	UIDNext      uint32  // The next unique identifier value
-	UIDValidity  uint32  // The unique identifier validity value
-	UIDNotSticky bool    // UIDPLUS extension (client-only)
-	NOMODSEQ     bool    // set to true if NOMODSEQ is provided
+	Name          string  // Mailbox name
+	ReadOnly      bool    // Mailbox read/write access (client-only)
+	Flags         FlagSet // Defined flags in the mailbox (client-only)
+	PermFlags     FlagSet // Flags that the client can change permanently (client-only)
+	Messages      uint32  // Number of messages in the mailbox
+	Recent        uint32  // Number of messages with the \Recent flag set
+	Unseen        uint32  // Sequence number of the first unseen message
+	UIDNext       uint32  // The next unique identifier value
+	UIDValidity   uint32  // The unique identifier validity value
+	UIDNotSticky  bool    // UIDPLUS extension (client-only)
+	NOMODSEQ      bool    // set to true if NOMODSEQ is provided
+	HighestMODSEQ uint32  // set to highestmodseq if provided
 }
 
 // newMailboxStatus returns an initialized MailboxStatus instance.
@@ -193,8 +194,9 @@ func (m *MailboxStatus) String() string {
 		"UIDValidity:  %v\n"+
 		"UIDNotSticky: %v\n",
 		"NOMODSEQ:     %v\n",
+		"HIGHESTMODSEQ:%v\n",
 		m.Name, m.ReadOnly, m.Flags, m.PermFlags, m.Messages, m.Recent,
-		m.Unseen, m.UIDNext, m.UIDValidity, m.UIDNotSticky, m.NOMODSEQ)
+		m.Unseen, m.UIDNext, m.UIDValidity, m.UIDNotSticky, m.NOMODSEQ, m.HighestMODSEQ)
 }
 
 // MailboxStatus returns the mailbox status information extracted from a STATUS
@@ -217,6 +219,8 @@ func (rsp *Response) MailboxStatus() *MailboxStatus {
 				v.UIDValidity = n
 			case "UNSEEN":
 				v.Unseen = n
+			case "HIGHESTMODSEQ":
+				v.HighestMODSEQ = n
 			}
 		}
 		rsp.Decoded = v
