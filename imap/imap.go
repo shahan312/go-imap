@@ -46,6 +46,21 @@ func DialTLS(addr string, config *tls.Config) (c *Client, err error) {
 	return
 }
 
+// DialTLSWithTimeout returns a new Client connected to an IMAP server at addr using the
+// specified config for encryption.
+func DialTLSWithTimeout(addr string, config *tls.Config, customNetTimeout, customClientTimeout time.Duration) (c *Client, err error) {
+	addr = defaultPort(addr, "993")
+	conn, err := net.DialTimeout("tcp", addr, customNetTimeout)
+	if err == nil {
+		host, _, _ := net.SplitHostPort(addr)
+		tlsConn := tls.Client(conn, setServerName(config, host))
+		if c, err = NewClient(tlsConn, host, customClientTimeout); err != nil {
+			conn.Close()
+		}
+	}
+	return
+}
+
 // Wait is a convenience function for transforming asynchronous commands into
 // synchronous ones. The error is nil if and only if the command is completed
 // with OK status condition. Usage example:
